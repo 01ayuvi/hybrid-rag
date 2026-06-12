@@ -1,10 +1,8 @@
 from ingestion.loader import load_pdf
 from ingestion.chunker import split_documents
-from ingestion.embedder import create_embeddings
 
-from retrieval.dense import (
-    store_chunks,
-    search
+from retrieval.sparse import (
+    BM25Retriever
 )
 
 docs = load_pdf(
@@ -18,40 +16,18 @@ texts = [
     for chunk in chunks
 ]
 
-embeddings = create_embeddings(texts)
+bm25 = BM25Retriever(texts)
 
-try:
-    store_chunks(chunks, embeddings)
-except:
-    pass
+results = bm25.search(
+    "code signing"
+)
 
-query = "How do attackers abuse code signing?"
+for idx, score in results:
 
-query_embedding = create_embeddings(
-    [query]
-)[0]
+    print(
+        f"\nScore: {score:.2f}"
+    )
 
-results = search(query_embedding)
-
-print("\nQUESTION:")
-print(query)
-
-print("\nTOP RESULTS:\n")
-
-for i, doc in enumerate(results["documents"][0]):
-
-    print(f"\nResult {i+1}")
-
-    if "distances" in results:
-        print(
-            f"Distance: "
-            f"{results['distances'][0][i]:.4f}"
-        )
-
-    print(doc[:500])
+    print(texts[idx][:300])
 
     print("-" * 60)
-results = search(query_embedding)
-
-print(type(results))
-print(results.keys())
