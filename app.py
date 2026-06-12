@@ -1,13 +1,17 @@
 from ingestion.loader import load_pdf
 from ingestion.chunker import split_documents
+from ingestion.embedder import create_embeddings
 
 docs = load_pdf("data/docs/company_policy.pdf")
 
-print(f"Pages Loaded: {len(docs)}")
-
 chunks = split_documents(docs)
 
-print(f"Chunks Created: {len(chunks)}")
+texts = [chunk.page_content for chunk in chunks]
 
-print("\nFirst Chunk:\n")
-print(chunks[0].page_content)
+embeddings = create_embeddings(texts)
+
+print(f"Total Chunks: {len(chunks)}")
+print(f"Embedding Shape: {embeddings.shape}")
+
+print("\nFirst Vector Preview:\n")
+print(embeddings[0][:10])
