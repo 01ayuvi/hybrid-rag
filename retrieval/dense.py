@@ -26,3 +26,13 @@ def store_chunks(chunks, embeddings):
         documents=texts,
         embeddings=embeddings.tolist()
     )
+def search(query_embedding, top_k=5):
+
+    return collection.query(
+        query_embeddings=[
+            query_embedding.tolist()
+        ],
+        n_results=top_k
+    )
+
+    
