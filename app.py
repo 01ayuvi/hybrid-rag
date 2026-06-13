@@ -166,3 +166,8 @@ print("=" * 80)
 print(answer)
 
 print("\n" + "=" * 80)
+from evaluation.evaluator import (
+    run_evaluation
+)
+
+run_evaluation()
