@@ -19,24 +19,42 @@ from retrieval.reranker import (
     rerank
 )
 
-# Load document
+from generation.llm import (
+    generate_answer
+)
+
+
+# ==========================
+# LOAD DOCUMENT
+# ==========================
+
 docs = load_pdf(
     "data/docs/company_policy.pdf"
 )
 
-# Chunk document
+# ==========================
+# CHUNK DOCUMENT
+# ==========================
+
 chunks = split_documents(docs)
 
-# Extract text
 texts = [
     chunk.page_content
     for chunk in chunks
 ]
 
-# Create embeddings
+print(f"\nTotal Chunks: {len(texts)}")
+
+# ==========================
+# CREATE EMBEDDINGS
+# ==========================
+
 embeddings = create_embeddings(texts)
 
-# Store in ChromaDB
+# ==========================
+# STORE IN CHROMADB
+# ==========================
+
 try:
     store_chunks(
         chunks,
@@ -45,43 +63,63 @@ try:
 except Exception:
     pass
 
-# Initialize BM25
+# ==========================
+# BM25 INDEX
+# ==========================
+
 bm25 = BM25Retriever(texts)
 
-# User query
-query = "How do attackers abuse code signing?"
+# ==========================
+# USER QUERY
+# ==========================
 
-# Query embedding
+query = input("\nAsk a question: ")
+
+# ==========================
+# QUERY EMBEDDING
+# ==========================
+
 query_embedding = create_embeddings(
     [query]
 )[0]
 
-# Dense retrieval
+# ==========================
+# DENSE RETRIEVAL
+# ==========================
+
 dense_results = search(
     query_embedding
 )
 
-# Sparse retrieval
+# ==========================
+# BM25 RETRIEVAL
+# ==========================
+
 bm25_results = bm25.search(
     query
 )
 
-# Hybrid retrieval
+# ==========================
+# HYBRID RETRIEVAL
+# ==========================
+
 hybrid_results = hybrid_search(
     dense_results,
     bm25_results,
     texts
 )
 
-print("\nHYBRID RESULTS:\n")
+print("\nHYBRID RESULTS\n")
 
 for doc, score in hybrid_results:
 
     print(f"\nHybrid Score: {score:.2f}")
-    print(doc[:500])
+    print(doc[:300])
     print("-" * 60)
 
-# Cross Encoder Re-ranking
+# ==========================
+# RERANKING
+# ==========================
 
 docs_for_rerank = [
     doc
@@ -93,10 +131,38 @@ reranked = rerank(
     docs_for_rerank
 )
 
-print("\nRERANKED RESULTS:\n")
+print("\nRERANKED RESULTS\n")
 
 for doc, score in reranked:
 
     print(f"\nCrossEncoder Score: {score:.4f}")
-    print(doc[:500])
+    print(doc[:300])
     print("-" * 60)
+
+# ==========================
+# BUILD CONTEXT
+# ==========================
+
+context = "\n\n".join(
+    [
+        doc
+        for doc, score in reranked[:3]
+    ]
+)
+
+# ==========================
+# GENERATE ANSWER
+# ==========================
+
+answer = generate_answer(
+    query,
+    context
+)
+
+print("\n" + "=" * 80)
+print("FINAL ANSWER")
+print("=" * 80)
+
+print(answer)
+
+print("\n" + "=" * 80)
